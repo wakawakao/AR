@@ -2,94 +2,82 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <title>AR収納ラベル（Hiro）</title>
+  <title>AR収納ラベル（キッチン上の戸棚）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
   <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>body{margin:0;overflow:hidden}</style>
 </head>
 <body>
-  <a-scene embedded arjs vr-mode-ui="enabled:false" renderer="antialias:true; logarithmicDepthBuffer:true">
-    <!-- 画像・Canvasなどのアセット置き場 -->
+  <a-scene embedded vr-mode-ui="enabled:false" renderer="antialias:true; logarithmicDepthBuffer:true" arjs="sourceType: webcam; debugUIEnabled:false">
     <a-assets>
-      <!-- ラベル用のCanvas（ここに日本語を描く） -->
-      <canvas id="labelCanvas" width="1024" height="512"></canvas>
+      <canvas id="labelCanvas" width="1280" height="800"></canvas>
     </a-assets>
 
     <a-marker preset="hiro">
-      <!-- 台座（ユーザーのベースを尊重） -->
-      <!-- <a-box position="0 0.1 0" width="1" height="0.1" depth="1" color="#3f51b5"></a-box> -->
-
-      <!-- 日本語ラベル面（Canvasをテクスチャとして貼る） -->
-      <!-- ※ マーカー面と平行に寝かせる -->
-      <a-plane position="0 0.3 0" rotation="-90 0 0"
-               width="1.6" height="0.8"
-               material="src: #labelCanvas; side:double; transparent:false">
-      </a-plane>
+      <a-box position="0 0.5 0" width="1" height="0.1" depth="1" color="#3f51b5"></a-box>
+      <a-plane position="0 0.7 0" rotation="-90 0 0" width="1.8" height="1.0" material="src: #labelCanvas; side:double; transparent:false"></a-plane>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // ====== ここを書き換えるだけでラベル内容を変更できます ======
-    const title = "引き出し 収納ラベル";
-    const lines = [
-      "上段：文房具（ペン・ハサミ・付箋）",
-      "中段：ケーブル（USB-C・HDMI・延長）",
-      "下段：書類A（学校・保険・領収書）"
-    ];
-    // ============================================================
+    const title = "キッチン上の戸棚";
+    const items = ["食器用洗剤","スポンジ","ジップロック","キッチン泡ハイター","ブンブンチョッパー","土鍋"];
 
-    function drawLabel() {
-      const canvas = document.getElementById('labelCanvas');
-      const ctx = canvas.getContext('2d');
+    function drawLabel(){
+      const cvs = document.getElementById('labelCanvas');
+      const ctx = cvs.getContext('2d');
 
-      // 背景（白）
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0,0,cvs.width,cvs.height);
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 10;
+      ctx.strokeRect(20,20,cvs.width-40,cvs.height-40);
 
-      // 枠線
-      ctx.strokeStyle = '#333333';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(16, 16, canvas.width-32, canvas.height-32);
-
-      // タイトル
-      ctx.fillStyle = '#111111';
-      ctx.font = 'bold 64px sans-serif';
+      ctx.fillStyle = '#111';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(title, canvas.width/2, 40);
+      ctx.font = 'bold 72px system-ui, -apple-system, Segoe UI, Roboto, Noto Sans JP, sans-serif';
+      ctx.fillText(title, cvs.width/2, 40);
 
-      // リスト本文
-      ctx.font = '48px sans-serif';
+      ctx.strokeStyle = '#ddd';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(60, 130);
+      ctx.lineTo(cvs.width-60, 130);
+      ctx.stroke();
+
       ctx.textAlign = 'left';
-      const startX = 80;
-      let y = 150;
-      const lineGap = 70;
+      ctx.font = '56px system-ui, -apple-system, Segoe UI, Roboto, Noto Sans JP, sans-serif';
+      const startX = 120;
+      let y = 180;
+      const gap = 85;
 
-      lines.forEach(text => {
-        ctx.fillText(text, startX, y);
-        y += lineGap;
+      items.forEach(t => {
+        ctx.fillStyle = '#444';
+        ctx.beginPath();
+        ctx.arc(startX-40, y+24, 10, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = '#111';
+        ctx.fillText(t, startX, y);
+        y += gap;
       });
 
-      // A-Frame にテクスチャ更新を伝える（保険）
-      const planeEl = document.querySelector('a-plane');
-      planeEl.addEventListener('materialtextureloaded', () => {
-        const mesh = planeEl.getObject3D('mesh');
-        if (mesh && mesh.material && mesh.material.map) {
-          mesh.material.map.needsUpdate = true;
-        }
-      });
-      // 既にロード済みでも更新
-      const mesh = planeEl.getObject3D('mesh');
+      const plane = document.querySelector('a-plane');
+      const mesh = plane.getObject3D('mesh');
       if (mesh && mesh.material && mesh.material.map) {
         mesh.material.map.needsUpdate = true;
+      } else {
+        plane.addEventListener('materialtextureloaded', () => {
+          const m = plane.getObject3D('mesh');
+          if (m && m.material && m.material.map) m.material.map.needsUpdate = true;
+        });
       }
     }
 
-    // ページ読み込み後に描画
     window.addEventListener('load', drawLabel);
   </script>
 </body>
 </html>
-
